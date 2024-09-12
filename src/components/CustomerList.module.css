@@ -1,0 +1,33 @@
+.customerList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .customerItem {
+    position: relative;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 4px;
+  }
+
+  .customerDetails {
+    /* Additional styling for customer details */
+  }
+
+  .editButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: #0070f3;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    display: none; /* Hide by default */
+  }
+
+  .customerItem:hover .editButton {
+    display: inline-block; /* Show on hover */
+  }
