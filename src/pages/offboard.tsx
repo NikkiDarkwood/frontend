@@ -2,29 +2,36 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Customer } from '../types';
 import { fetchCustomers, offboardCustomer } from '../services/api';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
+import Typography from '@mui/material/Typography';
 
 const Offboard: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [offboardDate, setOffboardDate] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const getCustomers = async () => {
+      setLoading(true);
       try {
         const data = await fetchCustomers();
         setCustomers(data);
       } catch (err) {
         console.error(err);
         setError('Failed to load customers.');
+      } finally {
+        setLoading(false);
       }
     };
 
     getCustomers();
   }, []);
 
-  const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCustomerId(e.target.value);
+  const handleCustomerChange = (event: any, value: Customer | null) => {
+    setSelectedCustomer(value);
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,16 +42,16 @@ const Offboard: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (!selectedCustomerId || !offboardDate) {
+    if (!selectedCustomer || !offboardDate) {
       setError('Please fill in all required fields.');
       return;
     }
 
     try {
       const isoDate = new Date(offboardDate).toISOString();
-      await offboardCustomer({ id: selectedCustomerId, offboardDate: isoDate });
+      await offboardCustomer({ id: selectedCustomer.id.toString(), offboardDate: isoDate });
       alert('Customer offboarded successfully!');
-      setSelectedCustomerId('');
+      setSelectedCustomer(null);
       setOffboardDate('');
     } catch (err) {
       console.error(err);
@@ -59,19 +66,37 @@ const Offboard: React.FC = () => {
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col">
-            <label className="font-medium mb-1">Select Customer:</label>
-            <select
-              value={selectedCustomerId}
+            <Autocomplete
+              options={customers}
+              getOptionLabel={(customer) =>
+                `${customer.name} (ID: ${customer.awsAccountId}, Email: ${customer.awsRootEmail})`
+              }
               onChange={handleCustomerChange}
-              className="border rounded-md p-2"
-            >
-              <option value="">--Select a Customer--</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
+              value={selectedCustomer}
+              loading={loading}
+              filterOptions={(options, { inputValue }) => {
+                return options.filter(
+                  (customer) =>
+                    customer.name.toLowerCase().includes(inputValue.toLowerCase()) ||
+                    customer.awsRootEmail.toLowerCase().includes(inputValue.toLowerCase()) ||
+                    customer.awsAccountId.includes(inputValue)
+                );
+              }}
+              renderOption={(props, option) => (
+                <li {...props}>
+                    <span className="font-bold">{option.name}</span>
+                  <span className="ml-2">{' (ID: '}{option.awsAccountId}, Email: {option.awsRootEmail}</span>
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search by name, email, or AWS Account ID"
+                  variant="outlined"
+                  fullWidth
+                />
+              )}
+            />
           </div>
           <div className="flex flex-col">
             <label className="font-medium mb-1">Offboard Date:</label>

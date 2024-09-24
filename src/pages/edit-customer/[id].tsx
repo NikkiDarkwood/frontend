@@ -14,7 +14,8 @@ const EditCustomerPage: React.FC = () => {
     awsRootEmail: '',
     awsAccountType: '',
     awsServices: [] as string[],
-    onboardDate: ''
+    onboardDate: '',
+    offboardDate: '',
   });
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -24,14 +25,18 @@ const EditCustomerPage: React.FC = () => {
       fetch(`/api/customers/${id}`)
         .then((response) => response.json())
         .then((data) => {
-          setCustomer(data);
+          setCustomer({
+            ...data,
+            onboardDate: data.onboardDate ? data.onboardDate.split('T')[0] : '',
+            offboardDate: data.offboardDate ? data.offboardDate.split('T')[0] : '',
+          });
           setSelectedServices(data.awsServices); // Set selected services from database
         })
         .catch((error) => console.error('Error fetching customer:', error));
     }
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setCustomer((prevCustomer) => ({ ...prevCustomer, [name]: value }));
   };
@@ -49,6 +54,10 @@ const EditCustomerPage: React.FC = () => {
     e.preventDefault();
 
     const updatedCustomer = { ...customer, awsServices: selectedServices };
+
+    // Convert dates to ISO format or null if empty
+    updatedCustomer.onboardDate = customer.onboardDate ? new Date(customer.onboardDate).toISOString() : '';
+    updatedCustomer.offboardDate = customer.offboardDate ? new Date(customer.offboardDate).toISOString() : '';
 
     try {
       await fetch(`/api/customers/${id}`, {
@@ -70,6 +79,7 @@ const EditCustomerPage: React.FC = () => {
       <div className="max-w-3xl mx-auto bg-white p-6 shadow-md rounded-lg">
         <h1 className="text-2xl font-semibold mb-6">Edit Customer</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name */}
           <div className="flex flex-col">
             <label className="font-medium mb-1">Name:</label>
             <input
@@ -81,6 +91,8 @@ const EditCustomerPage: React.FC = () => {
               className="border rounded-md p-2"
             />
           </div>
+
+          {/* AWS Account ID */}
           <div className="flex flex-col">
             <label className="font-medium mb-1">AWS Account ID:</label>
             <input
@@ -92,6 +104,8 @@ const EditCustomerPage: React.FC = () => {
               className="border rounded-md p-2"
             />
           </div>
+
+          {/* AWS Root Email */}
           <div className="flex flex-col">
             <label className="font-medium mb-1">AWS Root Email:</label>
             <input
@@ -103,6 +117,8 @@ const EditCustomerPage: React.FC = () => {
               className="border rounded-md p-2"
             />
           </div>
+
+          {/* AWS Account Type */}
           <div className="flex flex-col">
             <label className="font-medium mb-1">AWS Account Type:</label>
             <input
@@ -114,17 +130,8 @@ const EditCustomerPage: React.FC = () => {
               className="border rounded-md p-2"
             />
           </div>
-          <div className="flex flex-col">
-            <label className="font-medium mb-1">Onboard Date:</label>
-            <input
-              type="date"
-              name="onboardDate"
-              value={customer.onboardDate.split('T')[0]} // Format date
-              onChange={handleChange}
-              required
-              className="border rounded-md p-2"
-            />
-          </div>
+
+          {/* AWS Services */}
           <fieldset className="flex flex-col mt-4">
             <legend className="font-medium mb-2">AWS Services:</legend>
             <div className="flex flex-wrap gap-4">
@@ -142,6 +149,35 @@ const EditCustomerPage: React.FC = () => {
               ))}
             </div>
           </fieldset>
+
+          {/* Onboard Date */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Onboard Date:</label>
+            <input
+              type="date"
+              name="onboardDate"
+              value={customer.onboardDate}
+              onChange={handleChange}
+              className="border rounded-md p-2"
+            />
+          </div>
+
+          {/* Offboard Date */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Offboard Date:</label>
+            <input
+              type="date"
+              name="offboardDate"
+              value={customer.offboardDate}
+              onChange={handleChange}
+              className="border rounded-md p-2"
+            />
+            <small className="text-gray-500">
+              Leave empty to remove the offboard date.
+            </small>
+          </div>
+
+          {/* Submit Button */}
           <div className="flex justify-end">
             <button
               type="submit"

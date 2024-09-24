@@ -33,10 +33,10 @@ const Onboard: React.FC = () => {
 
   const handleServiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const updatedServices = checked
         ? [...prevData.awsServices, value]
-        : prevData.awsServices.filter(service => service !== value);
+        : prevData.awsServices.filter((service) => service !== value);
       return { ...prevData, awsServices: updatedServices };
     });
   };
@@ -58,6 +58,12 @@ const Onboard: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
+
+      if (response.status === 409) {
+        // AWS Account ID already exists
+        setError('AWS Account ID already exists. Please enter a unique AWS Account ID.');
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to onboard customer.');

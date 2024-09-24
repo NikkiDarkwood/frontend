@@ -23,3 +23,11 @@ model Customer {
   onboardDate      DateTime
   offboardDate     DateTime?
 }
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  level     String
+  message   String
+  timestamp DateTime @default(now())
+  meta      Json
+}
